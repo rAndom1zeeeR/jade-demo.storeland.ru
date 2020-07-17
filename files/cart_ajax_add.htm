@@ -1,0 +1,76 @@
+<div class="text-center AjaxCartMsg">
+  {% IF FORM_NOTICE %}<div class="{% IF FORM_NOTICE_IS_GOOD %}success{% ELSE %}warning{% ENDIF %}">{FORM_NOTICE | nl2br}</div>{% ENDIF %}
+  {% IFNOT cart_count_empty %}
+  <h5>Сейчас в корзине
+  <strong class="newCartCount">
+    {% IF cart_count_empty %}
+      <span class="red">0</span>
+    {% ELSE %}
+      {% FOR cart_count %}
+        {cart_count.COUNT}{cart_count.MEASURE_NAME}{% IFNOT cart_count.last %},{% ENDIF %}
+      {% ENDFOR %}
+    {% ENDIF %}
+  </strong>
+  товар{CART_COUNT_TOTAL | gen_word_end("","а","ов")}
+  на сумму 
+  <strong class="newCartSum">
+    {% IF cart_count_empty %}
+      <span class="red">0</span> {CURRENCY_NAME}
+    {% ELSE %}
+      {% FOR cart_sum %}
+        {cart_sum.NOW_WITH_DISCOUNT | money_format}<br />
+      {% ENDFOR %}
+    {% ENDIF %}
+  </strong>
+  </h5>
+  <h6>Вы можете перейти к оформлению заказа или продолжить покупки.</h6>
+  {% ENDIF %}
+  <div class="{% IF cart_count_empty %}{% IF FORM_NOTICE_IS_GOOD %}suc{% ELSE %}war{% ENDIF %}{% ENDIF %} ajax-buttons">
+    <button type="button" class="btn quickform" id="quickform-order" onclick="document.location='{CART_URL}';return false;">Перейти в корзину</button>
+    <button type="submit" class="btn fancyModalClose" id="quickform-close">Продолжить покупки</button>
+  </div>
+</div>
+
+<!-- Блок для обновления данных корзины. Не виден пользователю -->
+<div style="display:none;" id="newCartCount">
+  {CART_COUNT_TOTAL}
+</div>
+<div style="display:none;" id="newCartData">
+  {% IF cart_count_empty %}
+    <span class="empty">Корзина пуста</span>
+  {% ELSE %}
+    <strong class="no-empty">В корзине</strong>
+    <span class="empty" style="display:none;">Корзина пуста</span>
+    <ul id="cart-sidebar" class="mini-products-list unstyled">
+    {% FOR cart_items %}
+      <li {% IF cart_items.index > 3 %}style="display:none;"{% ENDIF %}>
+        <a href="{cart_items.GOODS_URL}" class="product-image">
+          <img src="{% IF cart_items.GOODS_IMAGE_EMPTY %}{ASSETS_IMAGES_PATH}no-photo-icon.png?design=jade{% ELSE %}{cart_items.GOODS_IMAGE_ICON}{% ENDIF %}" width="70" height="70" alt="{cart_items.GOODS_NAME}">
+        </a>
+        <a data-href="{cart_items.ORDER_LINE_DELETE_URL}" data-count="{cart_items.ORDER_LINE_QUANTITY}" data-price="{cart_items.GOODS_MOD_PRICE_NOW}" title="Удалить позицию" class="btn-remove product-remove">
+          <span class="icon-trash-o"></span>
+        </a>
+        <h4 class="product-name">
+          <a href="{cart_items.GOODS_URL}" title="">{cart_items.GOODS_NAME}</a>
+        </h4>
+        <div class="product-price"><span class="cart-quantity">{cart_items.ORDER_LINE_QUANTITY}</span> x <span class="price">{cart_items.GOODS_MOD_PRICE_NOW | money_format}</span></div>
+        <div class="clearfix"></div>
+      </li>
+    {% ENDFOR %}
+    </ul>
+    <div class="cart-button">
+      <a class="btn" title="Очистить корзину" data-href="{CART_TRUNCATE_URL}">Очистить корзину</a>
+      <a class="btn" title="Перейти к оформлению заказа" href="{CART_URL}">Оформить заказ</a>
+    </div>
+  {% ENDIF %}
+</div>
+
+<!-- Обновление данных корзины -->
+<script>
+$('.cart-count:first').html($('#newCartCount').html());
+$('.dropdown-menu:first').html($('#newCartData').html());
+$('.newCartCount').html($('#newCartCount').html());
+  $('.fancyModalClose').click(function(){
+    $.fancybox.close();  
+  });
+</script>

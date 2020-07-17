@@ -1,0 +1,461 @@
+{% IF FORM_NOTICE %}<div class="{% IF FORM_NOTICE_IS_GOOD %}success{% ELSE %}warning{% ENDIF %}">{FORM_NOTICE | nl2br}</div>{% ENDIF %}
+
+{% IF cart_count_empty %}
+  <h2 class="alignCenter">Ваша корзина пуста, пожалуйста, выберите другой товар для оформления заказа</h2>
+{% ELSE %}
+
+  <form action="{ORDER_STAGE_CONFIRM_WITHOUT_DOMAIN_URL}" method="post"  id="quickform">
+    <div style="padding:0 0.5em;">
+      <input type="hidden" name="hash" value="{HASH}" />
+      
+      <div>
+        <div class="title-box text-center">
+          <h2>Форма быстрого оформления заказа</h2>
+        </div>
+        <table class="form">
+          <tr>
+            <td><label for="reg_name" class="required">ФИО <em>*</em></label></td>
+            <td><input id="reg_name" name="form[contact][person]" value="{ORDER_FORM_CONTACT_PERSON}" maxlength="100" class="required input-text" type="text"/></td>
+          </tr>
+          <tr>
+            <td><label for="contactEmail" class="required">E-mail <em class="contactRegisterNeedElement" {% IFNOT ORDER_FORM_CONTACT_WANT_REGISTER %}style="display:none;"{% ENDIF %}>*</em></label></td>       
+            <td><input id="contactEmail" name="form[contact][email]" value="{ORDER_FORM_CONTACT_EMAIL}" maxlength="255" class="{% IF ORDER_FORM_CONTACT_WANT_REGISTER %}required{% ENDIF %} email input-text" type="text"/></td>
+          </tr>
+          <tr>
+            <td><label for="sites_client_phone" class="required">Телефон для связи <em>*</em></label></td>
+            <td><input id="sites_client_phone" name="form[contact][phone]" value="{ORDER_FORM_CONTACT_PHONE}" maxlength="255" class="required input-text" type="text"/>
+          </tr>
+          <tr>
+            <td></td>
+            <td>
+              <!-- Если в тарифном плане подключен раздел личного кабинета -->
+              {% IF TARIFF_FEATURE_CLIENT_ROOM %}
+                {% IFNOT CLIENT_IS_LOGIN %}
+                  <div class="control">
+                    <input type="checkbox" id="contactWantRegister" name="form[contact][want_register]" value="1" {% IF ORDER_FORM_CONTACT_WANT_REGISTER %}checked="checked"{% ENDIF %}><label for="contactWantRegister">Я хочу зарегистрироваться</label>
+                  </div>
+                {% ENDIF %}
+              {% ENDIF %}
+            </td>
+          </tr>
+          <!-- Если в тарифном плане подключен раздел личного кабинета -->
+          {% IF TARIFF_FEATURE_CLIENT_ROOM %}
+            {% IFNOT CLIENT_IS_LOGIN %}
+              <tr class="fieldset contactRegisterNeedElement" {% IFNOT ORDER_FORM_CONTACT_WANT_REGISTER %}style="display:none;"{% ENDIF %}>
+                <td><label for="contactPassWord" class="required">Придумайте пароль<em>*</em></label></td>
+                <td><input id="contactPassWord" type="password" name="form[contact][pass]" value="{ORDER_FORM_CONTACT_PASS}" maxlength="50" minlength="6" class="input-text {% IF ORDER_FORM_CONTACT_WANT_REGISTER %}required{% ENDIF %}" onkeyup="checkCapsWarning(event)" onfocus="checkCapsWarning(event)" onblur="removeCapsWarning()"/></td>
+               </tr>
+              <tr class="fieldset contactRegisterNeedElement" {% IFNOT ORDER_FORM_CONTACT_WANT_REGISTER %}style="display:none;"{% ENDIF %}>
+                <td></td>
+                <td>
+                  {% IFNOT user_agent_ie %}
+                    <div class="showPassBlock"><a href="#" rel="Скрыть пароль" class="OrderShowPass">Показать пароль</a></div>
+                  {% ENDIF %}
+                  
+                  <div id="caps_lock"> 
+                    <span class="icon-warning"></span><br/>
+                    <strong>Caps Lock включен.</strong><br/>
+                    <span>Пароль может быть введен неверно.</span>
+                  </div>
+                </td>
+              </tr>
+            {% ENDIF %}
+          {% ENDIF %}
+        </table>
+      </div>
+      
+      <div> 
+        <div class="title-box text-center">
+          <h2 class="title" title="Выберите удобный для вас способ доставки">Cпособ доставки</h2>
+        </div>
+        <table class="orderStageDeliveryListTable basket" style="max-width: 775px;">
+          {% FOR order_delivery %}
+            <tbody rel="{order_delivery.ID}">
+              <tr {% IF order_delivery.first %}class="first"{% ENDIF %}>
+                <td class="cell1" width="5%">
+                  <input type="radio" id="quickDeliveryIdMain{order_delivery.ID}" name="form[delivery][id]" value="{order_delivery.ID}" class="required deliveryRadio"
+                    {% IFNOT ORDER_FORM_DELIVERY_ID %}
+                      {% IF order_delivery.first %}
+                        checked="checked"
+                      {% ENDIF %}
+                    {% ELSEIF order_delivery.ID = ORDER_FORM_DELIVERY_ID %}
+                      checked="checked"
+                    {% ENDIF %}
+                  />
+                </td>
+                <td class="cell2" width="60%">
+                  <label for="quickDeliveryIdMain{order_delivery.ID}">{order_delivery.NAME}</label>
+                  {% IF order_delivery.DESC %}
+                    <div class="htmlDataBlock">{order_delivery.DESC}</div>
+                  {% ENDIF %}
+                </td>
+                <td class="cell3 price">
+                  <span class="orderStageDeliveryDefaultPrice" {% IF order_delivery.ZONE_ID>0 %}style="display:none;"{% ENDIF%}>{order_delivery.END_PRICE | money_format}</span>
+                  <span class="orderStageDeliveryZonePrice" {% IF order_delivery.ZONE_ID<1 %}style="display:none;"{% ENDIF%}>{order_delivery.ZONE_END_PRICE | money_format}</span>
+                </td>
+              </tr>
+              {% IFNOT order_delivery.zone_list_empty %}
+                {% FOR zone_list %}
+                  <tr class="zones">
+                    <td></td>
+                    <td>
+                      <!-- Заголовок внутри метода доставки, появляется только один раз-->  
+                      {% IF order_delivery.zone_list.index=1 %}
+                        <label for="quickDeliveryIdMain{order_delivery.ID}" class="zones-header">Зоны доставки</label><br />
+                      {% ENDIF %}
+                      <input 
+                        type="radio" class="deliveryZoneRadio" deliveryid="{order_delivery.ID}" id="quickDeliveryZoneId{order_delivery.zone_list.ID}" name="form[delivery][zone_id]" value="{order_delivery.zone_list.ID}"
+                        {% IF order_delivery.zone_list.ID = ORDER_FORM_DELIVERY_ZONE_ID %}
+                          checked="checked" rel="true"
+                        {% ENDIF %}
+                      />
+                      <label class="orderStageDeliveryZoneLabel" for="quickDeliveryZoneId{order_delivery.zone_list.ID}" style="color: #333;">
+                        {order_delivery.zone_list.NAME}
+                        <span class="deliveryZonePrice" style="color: #333;">{order_delivery.zone_list.END_PRICE | money_format}</span>
+                      </label>
+                    </td>
+                    <td></td>
+                  </tr>
+                {% ENDFOR %}
+              {% ENDIF %}
+            </tbody>
+          {% ENDFOR %}
+        </table>
+      </div>     
+      {% FOR order_delivery %}
+        {% IFNOT order_delivery.available_payment_list_empty  %}
+          <div class="quick_order_payment" rel="{order_delivery.ID}" style="display: none;"> 
+            <div class="title-box text-center">
+              <h2 class="title" title="Выберите удобный для вас способ оплаты заказа">Cпособ оплаты</h2>
+            </div>
+            <table class="orderStagePaymentListTable basket" style="max-width: 775px;">
+              {% FOR available_payment_list %}
+                <tr>
+                  <td class="cell1" width="5%"><input type="radio" id="quickPaymentId{order_delivery.ID}_{order_delivery.available_payment_list.ID}" name="form[payment][id]" value="{order_delivery.available_payment_list.ID}"  class="required" {% IFNOT ORDER_FORM_PAYMENT_ID %}{% IF order_delivery.available_payment_list.first %}checked="checked"{% ENDIF %}{% ELSEIF order_delivery.available_payment_list.ID = ORDER_FORM_PAYMENT_ID %}checked="checked"{% ENDIF %}/></td>
+                  <td class="cell2" width="95%">
+                    <label for="quickPaymentId{order_delivery.ID}_{order_delivery.available_payment_list.ID}">{order_delivery.available_payment_list.NAME}</label>
+                    <!-- Сообщение для пользователя -->
+                    {order_delivery.available_payment_list.MESSAGE}
+                  </td>
+                </tr>
+              {% ENDFOR %}
+            </table>
+          </div>
+        {% ENDIF %}
+      {% ENDFOR %}
+    </div>
+    <div> 
+      <div class="title-box text-center">
+        <h2 class="title">Адрес доставки заказа</h2>
+      </div>
+      <ul class="form-list unstyled">   
+        <!-- Если поле страны доставки запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_COUNTRY < 3 %}
+          <li class="fields">
+            {% IFNOT country_list_empty %}
+              <div class="field"> 
+                <label for="quickDeliveryCountry" {% IF SETTINGS_ORDER_FIELDS_COUNTRY=1 %}class="required"{% ENDIF %}>Страна{% IF SETTINGS_ORDER_FIELDS_COUNTRY=1 %}<em>*</em>{% ENDIF %}</label>
+                <div class="input-box">
+                  <select id="quickDeliveryCountry" name="form[delivery][country_id]" class="form-select {% IF SETTINGS_ORDER_FIELDS_COUNTRY=1 %}required{% ENDIF %}" style="float: none;">
+                    {% FOR country_list %}
+                      <option value="{country_list.ID}" {% IF country_list.ID=ORDER_FORM_DELIVERY_COUNTRY_ID %}selected="selected"{% ENDIF %}>
+                        {country_list.NAME}
+                      </option>
+                    {% ENDFOR %}
+                  </select>
+                </div>
+              </div>
+            {% ENDIF %}
+          </li>
+        {% ENDIF %}
+        
+        <!-- Если поле области запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_REGION < 3 %}
+          <li class="fields">
+            <div class="field">
+              <label for="quickDeliveryRegion" {% IF SETTINGS_ORDER_FIELDS_REGION=1 %}class="required"{% ENDIF %}>Область{% IF SETTINGS_ORDER_FIELDS_REGION=1 %}<em>*</em>{% ENDIF %}</label>
+              <div class="input-box">
+                <input type="text" id="quickDeliveryRegion" name="form[delivery][region]" value="{ORDER_FORM_DELIVERY_REGION}" maxlength="255" class="input-text {% IF SETTINGS_ORDER_FIELDS_REGION=1 %}required{% ENDIF %}"/>
+              </div>
+            </div>
+          </li>
+        {% ENDIF %}
+        
+        <!-- Если поле города запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_CITY < 3 %}
+          <li class="fields">
+            <div class="field"> 
+              <label for="quickDeliveryCity" {% IF SETTINGS_ORDER_FIELDS_CITY=1 %}class="required"{% ENDIF %}>Город{% IF SETTINGS_ORDER_FIELDS_CITY=1 %}<em>*</em>{% ENDIF %}</label>
+              <div class="input-box">
+                <input type="text" id="quickDeliveryCity" name="form[delivery][city]" value="{ORDER_FORM_DELIVERY_CITY}" class="input-text {% IF SETTINGS_ORDER_FIELDS_CITY=1 %}required{% ENDIF %}" maxlength="255" />
+              </div>
+            </div>
+          </li>
+        {% ENDIF %}
+        
+        <!-- Если поле почтового индекса запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_ZIP_CODE < 3 %}
+          <li class="fields">
+            <div class="field"> 
+              <label for="quickDeliveryZipCode" {% IF SETTINGS_ORDER_FIELDS_ZIP_CODE=1 %}class="required"{% ENDIF %}>Почтовый индекс{% IF SETTINGS_ORDER_FIELDS_ZIP_CODE=1 %}<em>*</em>{% ENDIF %}</label>
+              <div class="input-box">
+                <input type="text" id="quickDeliveryZipCode" name="form[delivery][zip_code]" value="{ORDER_FORM_DELIVERY_ZIP_CODE}" minlength="5" maxlength="6" class="input-text digits {% IF SETTINGS_ORDER_FIELDS_ZIP_CODE=1 %}required{% ENDIF %}" maxlength="255" />
+              </div>
+            </div>
+          </li>
+        {% ENDIF %}
+        
+        <!-- Если поле даты доставки запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_CONVENIENT_TIME < 3 %}
+          <li class="fields">
+            <div class="field">
+              <label for="quickDeliveryConvenientDate" {% IF SETTINGS_ORDER_FIELDS_CONVENIENT_TIME=1 %}class="required"{% ENDIF %}>Удобная дата доставки{% IF SETTINGS_ORDER_FIELDS_CONVENIENT_TIME=1 %}<em>*</em>{% ENDIF %}</label>
+              <div class="input-box">
+                <input type="text" id="quickDeliveryConvenientDate" name="form[delivery][convenient_date]" value="{ORDER_FORM_DELIVERY_CONVENIENT_DATE}" class="input-text {% IF SETTINGS_ORDER_FIELDS_CONVENIENT_TIME=1 %}required{% ENDIF %}" maxlength="10" minlength="10" />
+              </div>
+            </div>
+          </li>
+          <li class="fields">
+            <div class="field">
+              <label for="quickDeliveryConvenientDate" {% IF SETTINGS_ORDER_FIELDS_CONVENIENT_TIME=1 %}class="required"{% ENDIF %}>Удобное время доставки{% IF SETTINGS_ORDER_FIELDS_CONVENIENT_TIME=1 %}<em>*</em>{% ENDIF %}</label>
+              <div class="input-box">
+                c 
+                <select class="form-select" name="form[delivery][convenient_time_from]">
+                  <option></option>
+                  {% FOR convenient_time_from_list %}
+                    <option value="{convenient_time_from_list.HOUR_INT}" {% IF convenient_time_from_list.SELECTED %}selected="selected"{% ENDIF %}>{convenient_time_from_list.HOUR}</option>
+                  {% ENDFOR %}
+                </select>
+                до
+                <select class="form-select" name="form[delivery][convenient_time_to]">
+                  <option></option>
+                  {% FOR convenient_time_to_list %}
+                    <option value="{convenient_time_to_list.HOUR_INT}" {% IF convenient_time_to_list.SELECTED %}selected="selected"{% ENDIF %}>{convenient_time_to_list.HOUR}</option>
+                  {% ENDFOR %}
+                </select>
+              </div>
+            </div>
+          </li>
+        {% ENDIF %}              
+          
+        <!-- Если поле адреса доставки запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_ADDRESS < 3 %}
+          <li class="wide">
+            <div class="clear"></div>
+            <label for="quickDeliveryAddress" {% IF SETTINGS_ORDER_FIELDS_ADDRESS=1 %}class="required"{% ENDIF %}>Адрес доставки{% IF SETTINGS_ORDER_FIELDS_ADDRESS=1 %}<em>*</em>{% ENDIF %}</label>
+            <div class="input-box">
+              <textarea cols="100" rows="5" id="quickDeliveryAddress" name="form[delivery][address]" class="{% IF SETTINGS_ORDER_FIELDS_ADDRESS=1 %}required{% ENDIF %} textarea">{ORDER_FORM_DELIVERY_ADDRESS}</textarea>
+            </div>  
+          </li>
+        {% ENDIF %}
+          
+        <!-- Если поле адреса доставки запрашивается -->
+        {% IF SETTINGS_ORDER_FIELDS_COMMENT < 3 %}
+          <li class="wide">
+            <div class="clear"></div>
+            <label for="quickDeliveryComment" {% IF SETTINGS_ORDER_FIELDS_COMMENT=1 %}class="required"{% ENDIF %}>Комментарий{% IF SETTINGS_ORDER_FIELDS_COMMENT=1 %}<em>*</em>{% ENDIF %}</label>
+            <div class="input-box">
+              <textarea cols="100" rows="5" id="quickDeliveryComment" name="form[delivery][comment]" class="{% IF SETTINGS_ORDER_FIELDS_COMMENT=1 %}required{% ENDIF %} textarea">{ORDER_FORM_DELIVERY_COMMENT}</textarea>
+            </div>  
+          </li>
+        {% ENDIF %}
+      </ul> 
+      <div class="pp">Нажимая на кнопку Оформить заказ, Вы соглашаетесь с <a href="#">правилами обработки данных</a></div>
+      <button type="submit" class="btn" title="Оформить заказ"  style="float: left;margin-left:8px;">Оформить заказ</button> 
+    </div>
+  </form>
+
+
+<script type="text/javascript">
+  $(document).ready(function(){
+    
+    // При клике на кнопку быстрого оформления заказа
+    $(".quickform").click(function () {  
+      
+      // Текущая кнопка по всей логике больше не понадобится пользователю, скрываем её. Аналогично, если пользователь оформляет заказ, с большой вероятностью кнопка продолжить покупки ему тоже не нужна, тем более, что есть кнопка закрытия окна полностью дублирующая функционал кнопки "продолжить покупки" 
+      $(this).hide().parent().find('.сlose2').hide();
+
+      if ($('#quickform2').hasClass('visible')) {
+        $('#quickform2').removeClass("visible");
+        $('#quickform2').hide();
+      } else {
+        $('#quickform2').addClass("visible");
+        $('#quickform2').show();
+      }
+      
+      $.fancybox.update();
+    });
+    
+    $(".сlose2").click(function () { 
+      $.fancybox.close();
+    });
+    
+    var ID = $('input[name="form[delivery][id]"]:checked').val();  
+
+    $('.quick_order_payment').hide();
+    $('.quick_order_payment[rel="' + ID + '"]').show();
+    $('.quick_order_payment[rel="' + ID + '"]').find('input:first').attr('checked', true);
+      
+    $('.deliveryRadio').click(function(){  
+      var ID = $('input[name="form[delivery][id]"]:checked').val();  
+      $('.quick_order_payment').hide();
+      $('.quick_order_payment[rel="' + ID + '"]').show();
+      $('.quick_order_payment[rel="' + ID + '"]').find('input:first').attr('checked', true);
+    });
+    
+    // Форма регистрации нового пользователя, при оформлении заказа
+    $('.OrderShowPass').click(function(){
+      ChangePasswordFieldType(this, $('#contactPassWord'));
+      return false;
+    });
+    
+    // При оформлении заказа дадим возможность зарегистрироваться пользователю
+    $('#contactWantRegister').click(function(){
+      if($(this).attr("checked")) {
+        $('.contactRegisterNeedElement').show();
+        $('#contactEmail, #contactPassWord').addClass('required');
+      } else {
+        $('.contactRegisterNeedElement').hide();
+        $('#contactEmail, #contactPassWord').removeClass('required');
+      }
+    });
+    
+     // Действия при выборе варианта доставки на этапе оформления заказа
+    $('.deliveryRadio').click(function(){
+      
+      // Если текущая выделенная зона доставки не относится к выбранному варианту доставки, снимаем выделение с зоны доставки
+      if($('.deliveryZoneRadio:checked').attr('deliveryid') != $(this).val()) {
+        $('.deliveryZoneRadio:checked').click().attr('checked', false);
+      }
+    });
+    
+    // Действия при выборе зоны внутри варианта доставки на этапе оформления заказа
+    $('.deliveryZoneRadio').click(function(){
+      
+      var 
+        deliveryId = $(this).attr('deliveryid')
+        ,deliveryZonePrice = $(this).parent().find('.deliveryZonePrice')
+        ,deliveryTbody = $('.orderStageDeliveryListTable tbody[rel="' + deliveryId + '"]')
+        ,deliveryBlock = deliveryTbody.find('#quickDeliveryIdMain' + deliveryId)
+        ,deliveryZonePriceBlock = deliveryTbody.find('.orderStageDeliveryZonePrice')
+        ,deliveryDefaultPriceBlock = deliveryTbody.find('.orderStageDeliveryDefaultPrice')
+      ;
+  
+      // Если этот пункт уже выбран, при повторном клике пользователь видимо хочет снять выделение зоны доставки
+      if('true' == $(this).attr('rel')) {
+        $(this).attr('checked', false);
+        $(this).attr('rel', 'false');
+        
+        // Показываем цену по умолчанию
+        deliveryDefaultPriceBlock.show();
+        // Скрываем цену образованную от зоны
+        deliveryZonePriceBlock.hide();
+        
+      // Отмечаем у всех радио баттонов зон доставки свойство говорящее что они не отмечены
+      } else {
+        $('.deliveryZoneRadio').attr('rel', 'false');
+        $(this).attr('rel', 'true');
+        
+        // Показываем цену по умолчанию
+        deliveryDefaultPriceBlock.hide();
+        // Скрываем цену образованную от зоны
+        deliveryZonePriceBlock.show().html(deliveryZonePrice.html());
+        
+        // Выделяем вариант доставки к которому относится зона доставки
+        deliveryBlock.attr('checked', true);
+      }
+    });
+  
+    // Валидация формы на странице оформления заказа
+    $("#quickform").submit(function(){
+      
+      // Если форма невалидна не отправляем её на сервер
+      if(!$(this).valid()) {
+        return false;
+      }
+      
+      // Получаем данные формы, которые будем отправлять на сервер
+      var formData = $(this).serializeArray();
+      // Сообщаем серверу, что мы пришли через ajax запрос
+      formData.push({name: 'ajax_q', value: 1});
+  
+      // Аяксом добавляем товар в корзину и вызываем форму быстрого заказа товара
+      $.ajax({
+        type  	: "POST",
+        dataType: 'json',
+    		cache	  : false,
+    		url		  : $(this).attr('action'),
+    		data		: formData,
+    		success: function(data) {
+          // Если заказ был успешно создан
+          if( data.status == 'ok' ) {
+            window.location = data.location;
+          } else if( data.status == 'error' ) {
+            alert(data.message);
+          } else {
+            alert('Во время оформления заказа возникла неизвестная ошибка. Пожалуйста, обратитесь в службу технической поддержки.');
+          }
+    		}
+    	});
+      
+      return false;      
+    }).validate();
+    
+    $("#quickDeliveryConvenientDate").datepicker({
+      dayNames		    : ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'],
+  		dayNamesMin		  : ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб' ],
+  		closeText		    : 'Готово',
+  		currentText		  : 'Сегодня' ,
+  		duration		    : '',
+  		monthNames		  : ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Окрябрь','Ноябрь','Декабрь'],
+  		monthNamesShort : ['Янв','Фев','Март','Апр','Май','Июнь','Июль','Авг','Сен','Окт','Ноя','Дек'],
+  		yearRange		    : "-6:+6",
+  		dateFormat		  : 'dd.mm.yy',
+  		minDate         : new Date(),
+  		firstDay		    : 1
+  	});
+
+  });
+</script>
+{% ENDIF %}
+
+<!-- Блок для обновления данных корзины. Не виден пользователю -->
+<div style="display:none;" id="newCartCount">
+  {CART_COUNT_TOTAL}
+</div>
+<div style="display:none;" id="newCartData">
+  {% IF cart_count_empty %}
+    <span class="empty">Корзина пуста</span>
+  {% ELSE %}
+    <strong class="no-empty">В корзине</strong>
+    <span class="empty" style="display:none;">Корзина пуста</span>
+    <ul id="cart-sidebar" class="mini-products-list unstyled">
+    {% FOR cart_items %}
+      <li {% IF cart_items.index > 3 %}style="display:none;"{% ENDIF %}>
+        <a href="{cart_items.GOODS_URL}" class="product-image">
+          <img src="{% IF cart_items.GOODS_IMAGE_EMPTY %}{ASSETS_IMAGES_PATH}no-photo-icon.png?design=jade{% ELSE %}{cart_items.GOODS_IMAGE_ICON}{% ENDIF %}" width="70" height="70" alt="{cart_items.GOODS_NAME}">
+        </a>
+        <a data-href="{cart_items.ORDER_LINE_DELETE_URL}" data-count="{cart_items.ORDER_LINE_QUANTITY}" data-price="{cart_items.GOODS_MOD_PRICE_NOW}" title="Удалить позицию" class="btn-remove product-remove">
+          <span class="icon-trash-o"></span>
+        </a>
+        <h4 class="product-name">
+          <a href="{cart_items.GOODS_URL}" title="">{cart_items.GOODS_NAME}</a>
+        </h4>
+        <div class="product-price"><span class="cart-quantity">{cart_items.ORDER_LINE_QUANTITY}</span> x <span class="price">{cart_items.GOODS_MOD_PRICE_NOW | money_format}</span></div>
+        <div class="clearfix"></div>
+      </li>
+    {% ENDFOR %}
+    </ul>
+    <div class="cart-button">
+      <a class="btn" title="Очистить корзину" data-href="{CART_TRUNCATE_URL}">Очистить корзину</a>
+      <a class="btn" title="Перейти к оформлению заказа" href="{CART_URL}">Оформить заказ</a>
+    </div>
+  {% ENDIF %}
+</div>
+<!-- JS обновление данных корзины -->
+<script>
+$('.cart-count:first').html($('#newCartCount').html());
+$('.dropdown-menu:first').html($('#newCartData').html());
+</script>
+<!-- end Блок для обновления данных корзины. Не виден пользователю -->
+

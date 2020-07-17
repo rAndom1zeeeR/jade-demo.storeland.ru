@@ -1,0 +1,36 @@
+{% IF FORM_NOTICE %}<div class="{% IF FORM_NOTICE_IS_GOOD %}success{% ELSE %}warning{% ENDIF %}">{FORM_NOTICE | nl2br}</div>{% ENDIF %}
+    
+{% IF promotion_campaign_empty %}
+  <div class="message attention">Акций в нашем магазине пока не проводилось</div>
+{% ELSE %}
+  <!-- Список акций -->
+  <div class="discount-box col-md-9">
+    {% FOR promotion_campaign %}
+      <div class="content-discount">
+        <div class="img-discount">
+          <a href="{promotion_campaign.URL | url_amp}" title="{promotion_campaign.NAME}" class="thumbnail" >
+            <img class="goods-cat-image-medium" src="{% IF promotion_campaign.NAME=супер акция %}{ASSETS_IMAGES_PATH}sale_default_green.jpg?design=jade{% ELSE %}{ASSETS_IMAGES_PATH}sale_default_gray.jpg?design=jade{% ENDIF %}" alt="{promotion_campaign.NAME}" />
+          </a>
+        </div> 
+        <div class="desc-discount"> 
+          <h2 class="product-name"><a href="{promotion_campaign.URL | url_amp}" title="{promotion_campaign.NAME}">{promotion_campaign.NAME}</a></h2> 
+          <div class="price-box"> 
+            <table class="promotionCampaignInfo table-box">
+              <tr>
+                <td class="cell1"><b>Сроки проведения:</b></td>
+                <td class="cell2">{promotion_campaign.BEGINNING_TIME | date("d.m.Y")} - {promotion_campaign.EXPIRED_TIME | date("d.m.Y")}</td>
+              </tr>
+              <tr>
+                <td class="cell1"><b>Размер скидки:</b></td>
+                <td class="cell2">{promotion_campaign.PERCENTAGE} %</td>
+              </tr>
+            </table>
+          </div>  
+          <div class="blockquote">{promotion_campaign.DESCRIPTION_SHORT | nl2br}</div>
+          <a href="{promotion_campaign.URL | url_amp}" class="btn">Подробнее</a>
+        </div>
+        <div class="clearfix"></div>
+      </div>
+    {% ENDFOR promotion_campaign %}
+  </div>
+{% ENDIF %}

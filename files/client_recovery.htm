@@ -1,0 +1,41 @@
+{% IF FORM_NOTICE %}<div class="{% IF FORM_NOTICE_IS_GOOD %}success{% ELSE %}warning{% ENDIF %}">{FORM_NOTICE | nl2br}</div>{% ENDIF %}
+<div class="col-md-12 account">
+  <form action="{USER_RECOVERY_URL}" method="post" class="clientForm"> 
+    <input type="hidden" name="hash" value="{HASH}" />
+    <div class="col-sm-6 col-md-6 form-box">
+      <h5 class="legend">Быстро и просто восстановим доступ в личный кабинет!</h5> 
+      <p>Забыли пароль? Ничего страшного, со всеми бывает. Сейчас мы его восстановим! Для этого укажите свою почту, на которую будет отправлена ссылка подтверждение и новый пароль, с которым вы будете заходить на сайт.</p>
+      <ul class="form-list unstyled">
+        <li>
+          <label for="sites_client_mail" class="required">Электронная почта <em>*</em></label>
+          <div class="input-box">
+            <input id="sites_client_mail" type="text" name="form[sites_client_mail]"  value="{FORM_SITES_CLIENT_MAIL}" maxlength="255" class="input-text email">
+          </div>
+          <label for="sites_client_pass" class="required">Придумайте новый пароль <em>*</em></label>
+          <div class="input-box">
+            <input id="sites_client_pass" type="password" name="form[sites_client_pass]" value="{FORM_SITES_CLIENT_PASS}" maxlength="50" minlength="6" class="input-text"   onkeyup="checkCapsWarning(event)" onfocus="checkCapsWarning(event)" onblur="removeCapsWarning()"/>
+            {% IFNOT user_agent_ie %}
+              <div class="showPassBlock"><a href="#" rel="Скрыть пароль" class="showPass jsAction">Показать пароль</a></div>
+            {% ENDIF %}
+              <div id="caps_lock"> 
+                <span class="icon-warning"></span><br/>
+                <strong>Caps Lock включен.</strong><br/>
+                <span>Пароль может быть введен неверно.</span>
+              </div>
+          </div>
+        </li>
+      </ul>
+      <button type="submit" title="Submit" class="button btn">Восстановить</button><br>
+      <span class="required"><em>*</em> Обязательные поля</span>
+    </div>
+    <div class="col-sm-6 col-md-6">
+      <h5 class="legend">Ваш аккаунт</h5>
+      <p class="descriptions">Если Вы уже имеете аккаунт у нас, пожалуйста входите.</p>
+      <p class="descriptions">Если Вы забыли пароль, вопользуйтесь формой восстановления.</p>
+      <div class="buttons">
+        <a href="{USER_LOGIN_URL}" class="btn btn-default">Вход с паролем</a>
+        <a href="{USER_REGISTER_URL}" class="btn btn-default">Регистрация</a>
+      </div>
+    </div>
+  </form>
+</div>
